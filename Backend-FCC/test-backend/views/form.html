@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Person</title>
+</head>
+<body>
+  <h1>Create a New Person</h1>
+  <form action="/createPerson" method="POST">
+    <label for="name">Name:</label><br>
+    <input type="text" id="name" name="name"><br>
+
+    <label for="age">Age:</label><br>
+    <input type="number" id="age" name="age"><br>
+
+    <label for="foods">Favorite Foods (comma separated):</label><br>
+    <input type="text" id="foods" name="favoriteFoods"><br><br>
+
+    <input type="submit" value="Submit">
+  </form>
+</body>
+</html>
