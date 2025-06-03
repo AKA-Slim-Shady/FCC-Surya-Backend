@@ -25,26 +25,20 @@ app.get('/api/hello', function(req, res) {
 });
 
 let dnsDB = [];
+let count = 0;
 
 app.post('/api/shorturl' , function(req , res){
   const originalUrl = req.body.url;
   const hostname = new URL(originalUrl).hostname;
-  console.log(hostname);
   dns.lookup(hostname , function(err , data){
     if(err) res.send({ error: 'invalid url' });
     else{
-      console.log(data);
-      let arr = String(data).split('.');
-      let dnsNumber = '';
-      for(let i = 0 ; i < arr.length ; i++){
-        dnsNumber = dnsNumber + arr[i];
-      }
-      console.log(dnsNumber);
-      dnsDB.push([dnsNumber , originalUrl]);
-      console.log(dnsDB);
+      dnsDB.push([count , originalUrl]);
+      let val = count;
+      count++;
       res.json({
         "original_url": originalUrl,
-        "short_url": dnsNumber
+        "short_url": val
       });
     } 
   });
@@ -52,7 +46,7 @@ app.post('/api/shorturl' , function(req , res){
 
 app.get('/api/shorturl/:num' , function(req , res){
   const id = req.params.num;
-  const index = dnsDB.findIndex(entry => entry[0] === id);
+  const index = dnsDB.findIndex(entry => entry[0] === parseInt(id));
   if(index !== -1){
     const url = dnsDB[index][1];
     res.redirect(url);
