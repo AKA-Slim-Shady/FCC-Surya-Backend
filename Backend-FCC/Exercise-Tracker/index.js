@@ -100,7 +100,8 @@ app.get("/api/users/:_id/logs" , async function(req , res){
   }
 
   const found = await query.exec();
-  
+  const userData = await user.find({_id : id});
+
   const exerciseCount = found.length;
   let logs = [];
   for(let i = 0 ; i < found.length ; i++){
@@ -115,7 +116,7 @@ app.get("/api/users/:_id/logs" , async function(req , res){
   }
   res.json({
     "_id": id,
-    "username": found[0].username,
+    "username": userData.username,
     "count": exerciseCount,
     "log": logs
   });
