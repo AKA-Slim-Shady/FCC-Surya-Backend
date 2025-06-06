@@ -80,6 +80,31 @@ app.post('/api/users/:_id/exercises', async function(req, res) {
   });
 });
 
+app.get("/api/users/:_id/logs" , async function(req , res){
+  const from = req.query.from;
+  const to = req.query.to;
+  const limit = req.query.limit;
+  const id = req.params._id;
+  const found = await exercise.find({userId : id});
+  const exerciseCount = found.length;
+  let logs = [];
+  for(let i = 0 ; i < found.length ; i++){
+    let des = found[i].description;
+    let dur = found[i].duration;
+    let date = found[i].date;
+    logs.push({
+      "description" : des,
+      "duration" : dur ,
+      "date" : date.toDateString()
+    });
+  }
+  res.json({
+    "_id": id,
+    "username": found[0].username,
+    "count": exerciseCount,
+    "log": logs
+  });
+});
 
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
