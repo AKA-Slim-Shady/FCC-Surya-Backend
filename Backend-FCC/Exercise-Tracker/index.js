@@ -21,7 +21,17 @@ const userSchema =  mongoose.Schema({
   'username' : String
 });
 
+const exerciseSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'userModel', required: true },
+  username: String,
+  description: { type: String, required: true },
+  duration: { type: Number, required: true },
+  date: { type: Date, default: Date.now }
+});
+
+
 let user =  mongoose.model('userModel' , userSchema);
+let exercise = mongoose.model('exerciseModel' , exerciseSchema);
 
 const createUser = async (userName) => {
   const newUser = await user.create({'username' : userName});
@@ -43,6 +53,36 @@ app.route("/api/users").post(
   }
 );
 
+const createExercise = async (id , desc , dur , date) => {
+    const found = await user.findById(id); 
+    const newExercise = await exercise.create({
+      userId : id,
+      userName : found.username,
+      description : desc,
+      duration : dur,
+      date : date ? new Date(date) : new Date()
+    });
+    return newExercise;
+}
+
+app.post('/api/users/:_id/exercises' , async function(req , res){
+  const id = req.params._id;
+  const desc = req.body.description;
+  const dur = req.body.duration;
+  const date = req.body.date;
+  const entry = await createExercise(id , desc , dur , date);
+  res.json({
+    "_id" : id,
+    "username" : entry.userName ,
+    "date" : entry.date.toDateString(),
+    "duration" : dur,
+    "description" : desc
+  });
+});
+
+
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
 })
+
+
