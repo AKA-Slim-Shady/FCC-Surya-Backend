@@ -85,7 +85,22 @@ app.get("/api/users/:_id/logs" , async function(req , res){
   const to = req.query.to;
   const limit = req.query.limit;
   const id = req.params._id;
-  const found = await exercise.find({userId : id});
+  const filter = {userId : id};
+  let query;
+  if(from || to){
+    filter.date = {};
+    if(from) filter.date.$gte = new Date(from);
+    if(to) filter.date.$lte = new Date(to);
+  }
+
+  query = exercise.find(filter);
+
+  if(limit){
+    query = query.limit(parseInt(limit));
+  }
+
+  const found = await query.exec();
+  
   const exerciseCount = found.length;
   let logs = [];
   for(let i = 0 ; i < found.length ; i++){
@@ -95,7 +110,7 @@ app.get("/api/users/:_id/logs" , async function(req , res){
     logs.push({
       "description" : des,
       "duration" : dur ,
-      "date" : date.toDateString()
+      "date" : new Date(date).toDateString()
     });
   }
   res.json({
