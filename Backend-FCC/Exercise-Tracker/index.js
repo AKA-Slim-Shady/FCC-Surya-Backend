@@ -57,7 +57,7 @@ const createExercise = async (id , desc , dur , date) => {
     const found = await user.findById(id); 
     const newExercise = await exercise.create({
       userId : id,
-      userName : found.username,
+      username : found.username,
       description : desc,
       duration : dur,
       date : date ? new Date(date) : new Date()
@@ -65,18 +65,18 @@ const createExercise = async (id , desc , dur , date) => {
     return newExercise;
 }
 
-app.post('/api/users/:_id/exercises' , async function(req , res){
+app.post('/api/users/:_id/exercises', async function(req, res) {
   const id = req.params._id;
   const desc = req.body.description;
-  const dur = req.body.duration;
+  const dur = parseInt(req.body.duration); 
   const date = req.body.date;
-  const entry = await createExercise(id , desc , dur , date);
+  const entry = await createExercise(id, desc, dur, date);
   res.json({
-    "_id" : id,
-    "username" : entry.userName ,
-    "date" : entry.date.toDateString(),
-    "duration" : dur,
-    "description" : desc
+    "_id": id,
+    "username": entry.username, 
+    "date": entry.date.toDateString(),
+    "duration": entry.duration, 
+    "description": entry.description
   });
 });
 
