@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Authenticating...</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+    }
+
+    .loader {
+      text-align: center;
+    }
+
+    .loader-icon {
+      width: 80px;
+      height: 80px;
+      border: 6px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #ffd700;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    .status-icon {
+      font-size: 3rem;
+      margin-top: 20px;
+    }
+
+    .loader p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="loader">
+    <div class="loader-icon" id="spinner"></div>
+    <p id="status-msg">Authenticating your credentials... Please wait.</p>
+    <div class="status-icon" id="status-icon"></div>
+  </div>
+
+  <script>
+    const spinner = document.getElementById("spinner");
+    const statusMsg = document.getElementById("status-msg");
+    const statusIcon = document.getElementById("status-icon");
+
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+
+    if (error === "usernotfound") {
+      spinner.style.display = "none";
+      statusIcon.textContent = "❌";
+      statusMsg.textContent = "User not found. Redirecting to login...";
+      setTimeout(() => window.location.href = "/login", 2500);
+    } else if (error === "wrongpassword") {
+      spinner.style.display = "none";
+      statusIcon.textContent = "❌";
+      statusMsg.textContent = "Incorrect password. Redirecting...";
+      setTimeout(() => window.location.href = "/login", 2500);
+    } else {
+      // Normal authentication flow
+      setTimeout(() => {
+        fetch("/authentication")
+          .then(res => res.json())
+          .then(data => {
+            spinner.style.display = "none";
+
+            if (data.success) {
+              statusIcon.textContent = "✅";
+              statusMsg.textContent = "Login successful! Redirecting...";
+              setTimeout(() => window.location.href = "/dashboard", 2000);
+            } else {
+              statusIcon.textContent = "❌";
+              statusMsg.textContent = "Invalid credentials. Redirecting to login...";
+              setTimeout(() => window.location.href = "/login", 2500);
+            }
+          })
+          .catch(() => {
+            spinner.style.display = "none";
+            statusIcon.textContent = "❌";
+            statusMsg.textContent = "Server error. Redirecting...";
+            setTimeout(() => window.location.href = "/login", 2500);
+          });
+      }, 1000); // 1-second loading delay
+    }
+  </script>
+</body>
+</html>

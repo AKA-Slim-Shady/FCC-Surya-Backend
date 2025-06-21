@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Progress Reports</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      color: #333;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      padding: 1.5rem 2rem;
+      color: white;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 0.5rem 0;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+    }
+
+    .report-section {
+      margin-bottom: 3rem;
+    }
+
+    canvas {
+      max-width: 100%;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Progress Reports</h1>
+    <p>Track your workout history and performance trends</p>
+  </header>
+
+  <main>
+    <section class="report-section">
+      <h2>Workout Frequency (Workouts per Month)</h2>
+      <canvas id="frequencyChart"></canvas>
+    </section>
+
+    <section class="report-section">
+      <h2>Monthly Weighted Volume (kg)</h2>
+      <canvas id="weightedVolumeChart"></canvas>
+    </section>
+
+    <section class="report-section">
+      <h2>Monthly Repetition Volume</h2>
+      <canvas id="repVolumeChart"></canvas>
+    </section>
+
+    <section class="report-section">
+      <h2>Workout Split Breakdown</h2>
+      <canvas id="splitChart"></canvas>
+    </section>
+  </main>
+
+  <script>
+    async function renderReports() {
+      try {
+        const [frequencyRes, volumeRes, splitRes] = await Promise.all([
+          fetch('/api/report/frequency'),
+          fetch('/api/report/volume'),
+          fetch('/api/report/classes')
+        ]);
+
+        const frequencyData = await frequencyRes.json();
+        const volumeData = await volumeRes.json();
+        const splitData = await splitRes.json();
+        const perMonthVolume = volumeData.perMonth || {};
+
+        // Workout Frequency Chart
+        const freqLabels = Object.keys(frequencyData);
+        const freqValues = Object.values(frequencyData);
+
+        new Chart(document.getElementById('frequencyChart'), {
+          type: 'bar',
+          data: {
+            labels: freqLabels,
+            datasets: [{
+              label: 'Workouts per Month',
+              data: freqValues,
+              backgroundColor: '#667eea'
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { beginAtZero: true }
+            }
+          }
+        });
+
+        // Weighted Volume Chart
+        const volumeLabels = Object.keys(perMonthVolume);
+        const weightedValues = volumeLabels.map(month => perMonthVolume[month].totalWeightedVolume);
+        const repValues = volumeLabels.map(month => perMonthVolume[month].totalRepVolume);
+
+        new Chart(document.getElementById('weightedVolumeChart'), {
+          type: 'bar',
+          data: {
+            labels: volumeLabels,
+            datasets: [{
+              label: 'Total Weighted Volume (kg)',
+              data: weightedValues,
+              backgroundColor: '#764ba2'
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { beginAtZero: true }
+            }
+          }
+        });
+
+        // Repetition Volume Chart
+        new Chart(document.getElementById('repVolumeChart'), {
+          type: 'bar',
+          data: {
+            labels: volumeLabels,
+            datasets: [{
+              label: 'Total Repetition Volume',
+              data: repValues,
+              backgroundColor: '#48bb78'
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { beginAtZero: true }
+            }
+          }
+        });
+
+        // Workout Split Breakdown Pie Chart
+        const splitLabels = Object.keys(splitData);
+        const splitValues = Object.values(splitData);
+
+        new Chart(document.getElementById('splitChart'), {
+          type: 'pie',
+          data: {
+            labels: splitLabels,
+            datasets: [{
+              label: 'Workout Split Breakdown',
+              data: splitValues,
+              backgroundColor: [
+                '#f87171', // Push
+                '#60a5fa', // Pull
+                '#34d399', // Legs
+                '#fbbf24', // Core
+                '#a78bfa', // Cardio
+                '#f472b6'  // Full Body
+              ],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            }
+          }
+        });
+
+      } catch (error) {
+        console.error('Failed to render reports:', error);
+      }
+    }
+
+    renderReports();
+  </script>
+</body>
+</html>

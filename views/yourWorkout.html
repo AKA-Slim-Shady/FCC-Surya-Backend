@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Workout</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      padding: 2rem;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #444;
+    }
+
+    .workout-section {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .exercise {
+      border-bottom: 1px solid #ddd;
+      padding: 1rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .exercise:last-child {
+      border-bottom: none;
+    }
+
+    .exercise input {
+      width: 100%;
+      padding: 0.4rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .exercise-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .delete-btn {
+      background: #ff5e5e;
+      border: none;
+      color: white;
+      padding: 0.3rem 0.6rem;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .save-btn, .delete-workout-btn {
+      margin-top: 1.5rem;
+      display: block;
+      width: 100%;
+      padding: 0.8rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .save-btn {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .delete-workout-btn {
+      background-color: #d9534f;
+      color: white;
+      margin-top: 0.5rem;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input[type="text"] {
+      margin-bottom: 1rem;
+    }
+
+    #status-message {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      display: none;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Edit Workout</h1>
+  <div class="workout-section" id="workout-section">
+    <label for="workout-name">Workout Name:</label>
+    <input type="text" id="workout-name" placeholder="Workout Name" />
+    <div id="exercise-list"></div>
+
+    <button class="save-btn" onclick="saveChanges()">Save Changes</button>
+    <button class="delete-workout-btn" onclick="deleteWorkout()">Delete Entire Workout</button>
+
+    <div id="status-message"></div>
+  </div>
+
+<script>
+  const workoutSection = document.getElementById('workout-section');
+  const exerciseList = document.getElementById('exercise-list');
+  const workoutNameInput = document.getElementById('workout-name');
+  const workoutIdFromUrl = window.location.pathname.split('/').pop();
+  const statusMessage = document.getElementById('status-message');
+
+  let exercises = [];
+  let workoutIndex = null;
+
+  async function fetchWorkout() {
+    try {
+      const res = await fetch('/api/workouts', { credentials: 'include' });
+      const data = await res.json();
+      const { workouts, workoutID } = data;
+
+      for (const [index, id] of Object.entries(workoutID)) {
+        if (id === workoutIdFromUrl) {
+          workoutIndex = index;
+          break;
+        }
+      }
+
+      if (workoutIndex === null) throw new Error('Workout ID not found.');
+
+      exercises = workouts[workoutIndex];
+      workoutNameInput.value = data.name?.[workoutIndex] || `Workout ${parseInt(workoutIndex) + 1}`;
+      renderExercises();
+    } catch (err) {
+      workoutSection.innerHTML = `<p style="color:#d00;">Failed to load workout.</p>`;
+      console.error(err);
+    }
+  }
+
+  function renderExercises() {
+    exerciseList.innerHTML = '';
+    exercises.forEach((ex, index) => {
+      const div = document.createElement('div');
+      div.className = 'exercise';
+
+      div.innerHTML = `
+        <div class="exercise-header">
+          <label>Exercise ${index + 1}</label>
+          <button class="delete-btn" onclick="removeExercise(${index})">Remove</button>
+        </div>
+        <input type="text" placeholder="Exercise name" value="${ex.exercise}" onchange="updateField(${index}, 'exercise', this.value)" />
+        <input type="number" placeholder="Reps" value="${ex.reps}" onchange="updateField(${index}, 'reps', this.value)" />
+        <input type="number" placeholder="Sets" value="${ex.sets}" onchange="updateField(${index}, 'sets', this.value)" />
+        <input type="number" placeholder="Weights" value="${ex.weights}" onchange="updateField(${index}, 'weights', this.value)" />
+      `;
+
+      exerciseList.appendChild(div);
+    });
+  }
+
+  function updateField(index, field, value) {
+    exercises[index][field] = isNaN(value) ? value : Number(value);
+  }
+
+  function removeExercise(index) {
+    exercises.splice(index, 1);
+    renderExercises();
+  }
+
+  async function saveChanges() {
+    const workoutName = workoutNameInput.value || `Workout ${workoutIndex}`;
+
+    const payload = {
+      id: workoutIdFromUrl,
+      name: workoutName,
+      exercises
+    };
+
+    try {
+      const res = await fetch(`/dashboard/update-workouts/${workoutIdFromUrl}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+
+      if (res.status === 200) {
+        statusMessage.style.display = 'block';
+        statusMessage.className = 'success';
+        statusMessage.textContent = '💪 Workout Updated Successfully';
+      } else if (res.status === 401) {
+        statusMessage.style.display = 'block';
+        statusMessage.className = 'error';
+        statusMessage.textContent = '👀 Workout ID seems to be incorrect';
+      } else {
+        throw new Error('Unexpected server response');
+      }
+    } catch (err) {
+      statusMessage.style.display = 'block';
+      statusMessage.className = 'error';
+      statusMessage.textContent = '👀 Workout ID seems to be incorrect';
+      console.error(err);
+    }
+  }
+
+  async function deleteWorkout() {
+  if (!confirm('Are you sure you want to delete this workout?')) return;
+
+  try {
+    const res = await fetch(`/dashboard/update-workouts/${workoutIdFromUrl}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({ id: workoutIdFromUrl, delete: true })
+    });
+
+    if (!res.ok) throw new Error('Failed to delete workout');
+
+    window.location.href = '/dashboard/update-workout';
+  } catch (err) {
+    alert('Failed to delete workout.');
+    console.error(err);
+  }
+}
+window.onload = fetchWorkout;
+</script>
+
+</body>
+</html>

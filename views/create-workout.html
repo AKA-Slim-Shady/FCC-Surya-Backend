@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Workout</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      padding: 2rem;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #444;
+      margin-bottom: 2rem;
+    }
+
+    form {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .exercise-entry {
+      border: 1px solid #ddd;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+
+    select,
+    input {
+      width: 100%;
+      padding: 0.6rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #556cd6, #633f9c);
+    }
+
+    .add-more {
+      background: transparent;
+      border: 2px dashed #888;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Create a New Workout</h1>
+  <form id="workout-form" method="POST" action="/dashboard/create-workout">
+    <div id="workout-inputs">
+      <!-- JavaScript will inject exercise entries here -->
+    </div>
+
+    <button type="button" class="add-more" onclick="addWorkoutInput()">+ Add Another Exercise</button>
+    <br />
+    <button type="submit">Create Workout</button>
+  </form>
+
+  <script>
+    let workoutCount = 0;
+    let exerciseOptions = [];
+
+    async function fetchExercises() {
+      try {
+        const res = await fetch('/api/exercises');
+        const data = await res.json();
+        exerciseOptions = data.exercises || [];
+        addWorkoutInput(); // Add first input after data is loaded
+      } catch (err) {
+        console.error('Failed to load exercises:', err);
+      }
+    }
+
+    function addWorkoutInput() {
+      const container = document.getElementById('workout-inputs');
+
+      const entry = document.createElement('div');
+      entry.classList.add('exercise-entry');
+
+      const optionsHtml = exerciseOptions.map(ex => 
+        `<option value="${ex.name}">${ex.name} (${ex.difficulty})</option>`
+      ).join('');
+
+      entry.innerHTML = `
+        <label for="exercise-${workoutCount}">Exercise</label>
+        <select name="workouts[${workoutCount}][exercise]" id="exercise-${workoutCount}" required>
+          <option value="">-- Select Exercise --</option>
+          ${optionsHtml}
+        </select>
+
+        <label for="sets-${workoutCount}">Sets</label>
+        <input type="number" name="workouts[${workoutCount}][sets]" id="sets-${workoutCount}" required min="1" />
+
+        <label for="reps-${workoutCount}">Reps</label>
+        <input type="number" name="workouts[${workoutCount}][reps]" id="reps-${workoutCount}" required min="1" />
+
+        <label for="weights-${workoutCount}">Weight (kg)</label>
+        <input type="number" name="workouts[${workoutCount}][weights]" id="weights-${workoutCount}" required min="0" />
+      `;
+
+      container.appendChild(entry);
+      workoutCount++;
+    }
+
+    // On page load, fetch exercise list
+    window.addEventListener('DOMContentLoaded', fetchExercises);
+  </script>
+</body>
+</html>

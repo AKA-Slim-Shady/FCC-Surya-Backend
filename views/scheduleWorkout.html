@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Schedule Workout</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      color: #333;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      padding: 1.5rem 2rem;
+      color: white;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 0.5rem 0;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    main {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    select, input[type="date"], input[type="time"] {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    button[type="submit"] {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button[type="submit"]:hover {
+      background: linear-gradient(135deg, #5a67d8, #6b46c1);
+    }
+
+    .card {
+      background: #fdfdfd;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .exercise-list {
+      margin: 0;
+      padding-left: 1rem;
+    }
+
+    .exercise-list li {
+      margin: 0.3rem 0;
+      color: #555;
+    }
+
+    .scheduled-entry {
+      background: #edf2f7;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .scheduled-entry h4 {
+      margin: 0 0 0.5rem 0;
+    }
+
+    .no-schedules {
+      font-style: italic;
+      color: #888;
+    }
+
+    #schedule-form {
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Schedule a Workout</h1>
+    <p>View your scheduled workouts and plan new ones below.</p>
+  </header>
+
+  <main>
+    <section id="scheduled-section">
+      <h2>Scheduled Workouts</h2>
+      <div id="scheduled-list" class="no-schedules">Loading scheduled workouts...</div>
+    </section>
+
+    <form id="schedule-form">
+      <h2>Schedule a Workout</h2>
+      <div class="form-group">
+        <label for="workout-select">Select Workout</label>
+        <select id="workout-select" required>
+          <option value="">-- Select a workout --</option>
+        </select>
+      </div>
+
+      <div id="workout-summary" style="display: none;">
+        <div class="card" id="workout-card">
+          <h3 id="workout-name"></h3>
+          <ul class="exercise-list" id="exercise-list"></ul>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="schedule-date">Date</label>
+        <input type="date" id="schedule-date" required />
+      </div>
+
+      <div class="form-group">
+        <label for="schedule-time">Time</label>
+        <input type="time" id="schedule-time" required />
+      </div>
+
+      <button type="submit">Schedule Workout</button>
+    </form>
+  </main>
+
+<script>
+  let workoutData = {};
+  let workoutIdMap = {};
+  let workoutNameMap = {};
+
+  async function loadWorkouts() {
+    try {
+      const res = await fetch('/api/workouts');
+      const data = await res.json();
+
+      workoutData = data.workouts;
+      workoutIdMap = data.workoutID;
+      workoutNameMap = data.name;
+
+      const select = document.getElementById('workout-select');
+      for (const key in workoutData) {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = workoutNameMap[key] || `Workout ${parseInt(key) + 1}`;
+        select.appendChild(option);
+      }
+    } catch (err) {
+      alert('Failed to load workouts.');
+      console.error(err);
+    }
+  }
+
+  async function loadScheduledWorkouts() {
+  try {
+    const res = await fetch('/api/schedules');
+    const data = await res.json();
+
+    const container = document.getElementById('scheduled-list');
+    container.innerHTML = '';
+
+    const scheduleKeys = Object.keys(data);
+    if (scheduleKeys.length === 0) {
+      container.innerHTML = '<div class="no-schedules">No workouts scheduled yet.</div>';
+      return;
+    }
+
+    scheduleKeys.forEach(id => {
+      const schedule = data[id];
+      const div = document.createElement('div');
+      div.className = 'card';
+
+      const name = schedule.name || 'Workout';
+      const date = schedule.schedule ? new Date(schedule.schedule) : null;
+      const day = date ? date.toLocaleDateString() : 'Not scheduled';
+      const time = date ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+      const exerciseHTML = schedule.workouts?.map(ex => 
+        `<li>${ex.exercise} — ${ex.sets} sets × ${ex.reps} reps, ${ex.weights} kg</li>`
+      ).join('') || '';
+
+      div.innerHTML = `
+        <h3>${name}</h3>
+        ${date ? `<p><strong>Date:</strong> ${day}</p><p><strong>Time:</strong> ${time}</p>` : ''}
+        <ul class="exercise-list">${exerciseHTML}</ul>
+      `;
+
+      container.appendChild(div);
+    });
+  } catch (err) {
+    console.error('Failed to fetch schedules:', err);
+    document.getElementById('scheduled-list').innerHTML = '<div class="no-schedules">Error loading schedules.</div>';
+  }
+}
+
+
+  document.getElementById('workout-select').addEventListener('change', function () {
+    const key = this.value;
+    const name = workoutNameMap[key] || `Workout ${parseInt(key) + 1}`;
+    const exercises = workoutData[key];
+
+    if (exercises && exercises.length > 0) {
+      document.getElementById('workout-name').textContent = name;
+      const exerciseList = document.getElementById('exercise-list');
+      exerciseList.innerHTML = '';
+      exercises.forEach(ex => {
+        const li = document.createElement('li');
+        li.textContent = `${ex.exercise} — ${ex.sets} sets × ${ex.reps} reps, ${ex.weights} kg`;
+        exerciseList.appendChild(li);
+      });
+      document.getElementById('workout-summary').style.display = 'block';
+    } else {
+      document.getElementById('workout-summary').style.display = 'none';
+    }
+  });
+
+  document.getElementById('schedule-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const selectedKey = document.getElementById('workout-select').value;
+    const workoutId = workoutIdMap[selectedKey];
+    const date = document.getElementById('schedule-date').value;
+    const time = document.getElementById('schedule-time').value;
+
+    if (!workoutId || !date || !time) {
+      return alert('Please complete all fields.');
+    }
+
+    const scheduledAt = new Date(`${date}T${time}`);
+
+    try {
+      const res = await fetch('/dashboard/schedule-workout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workoutId, scheduledAt })
+      });
+
+      if (res.ok) {
+        alert('Workout scheduled successfully!');
+        document.getElementById('schedule-form').reset();
+        document.getElementById('workout-summary').style.display = 'none';
+        loadScheduledWorkouts();
+      } else {
+        const error = await res.json();
+        alert('Error: ' + (error.message || 'Could not schedule workout'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to schedule workout.');
+    }
+  });
+
+  loadWorkouts();
+  loadScheduledWorkouts();
+</script>
+
+</body>
+</html>

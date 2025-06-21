@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Your Workouts</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      padding: 2rem;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #444;
+    }
+
+    .workout-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: center;
+    }
+
+    .workout-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      width: 300px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .workout-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .workout-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .exercise-count {
+      font-size: 0.95rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>Your Workouts</h1>
+  <div class="workout-container" id="workout-container"></div>
+
+<script>
+  const container = document.getElementById('workout-container');
+
+  function renderWorkoutCard(id, exercises, index) {
+    const card = document.createElement('div');
+    card.className = 'workout-card';
+    card.onclick = () => {
+      window.location.href = `/dashboard/update-workouts/${id}`;
+    };
+
+    card.innerHTML = `
+      <div class="workout-title">Workout ${parseInt(index) + 1}</div>
+      <div class="exercise-count">${exercises.length} exercise(s)</div>
+    `;
+
+    container.appendChild(card);
+  }
+
+  window.onload = async () => {
+    try {
+      const res = await fetch('/api/workouts', {
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+
+      const data = await res.json();
+      const workouts = data.workouts;
+      const workoutIDs = data.workoutID;
+
+      container.innerHTML = ''; // Clear previous content
+
+      for (const index in workouts) {
+        const exercises = workouts[index];
+        const id = workoutIDs[index];
+        renderWorkoutCard(id, exercises, index);
+      }
+    } catch (err) {
+      console.error('Failed to load workouts:', err);
+      container.innerHTML = `<p style="text-align:center; color:#d00;">Failed to load workouts.</p>`;
+    }
+  };
+</script>
+
+</body>
+</html>

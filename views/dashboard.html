@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      color: #333;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      padding: 1.5rem 2rem;
+      color: white;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 0.5rem 0;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+    }
+
+    .card-body {
+      padding: 1rem;
+    }
+
+    .card-body h3 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+    }
+
+    .card-body p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome to Your Workout Dashboard</h1>
+    <p id="user-greeting">Hello, user</p>
+  </header>
+
+  <main>
+    <div class="card" onclick="window.location.href='/dashboard/create-workout'">
+      <img src="https://static.vecteezy.com/system/resources/previews/013/292/930/large_2x/choosing-weight-for-exercising-close-up-of-muscular-man-choosing-weight-for-exercising-while-standing-in-gym-photo.JPG" alt="Create Workout">
+      <div class="card-body">
+        <h3>Create Workout</h3>
+        <p>Design a personalized workout with multiple exercises, sets, and goals.</p>
+      </div>
+    </div>
+
+    <div class="card" onclick="window.location.href='/dashboard/schedule-workout'">
+      <img src="https://www.myzone.org/hs-fs/hubfs/Imported_Blog_Media/2-25.jpg?width=2100&height=1500&name=2-25.jpg" alt="Schedule Workout">
+      <div class="card-body">
+        <h3>Schedule Workout</h3>
+        <p>Pick a date and time to schedule your workout routine in advance.</p>
+      </div>
+    </div>
+
+    <div class="card" onclick="window.location.href='/dashboard/update-workout'">
+      <img src="https://media.istockphoto.com/photos/muscular-man-working-out-in-gym-doing-exercises-picture-id1080461618?k=6&m=1080461618&s=170667a&w=0&h=F8z1zxOURxPsosi0d-RPkwcEUo1kxMx7SGXlp22133Q=" alt="View Workouts">
+      <div class="card-body">
+        <h3>View Workouts</h3>
+        <p>See upcoming and completed workouts with options to edit or delete.</p>
+      </div>
+    </div>
+
+    <div class="card" onclick="window.location.href='/dashboard/reports'">
+      <img src="https://img.freepik.com/premium-vector/every-workout-is-progress-vintage-typography-gym-workout-t-shirt-design-illustration_467913-211.jpg" alt="Progress Reports">
+      <div class="card-body">
+        <h3>Progress Reports</h3>
+        <p>Analyze your fitness journey with detailed workout history and stats.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Fetch username from /api/users and display it
+    fetch("/api/users")
+      .then(res => res.json())
+      .then(data => {
+        if (data.name) {
+          document.getElementById("user-greeting").textContent = `Hello, ${data.name}`;
+        }
+      })
+      .catch(() => {
+        document.getElementById("user-greeting").textContent = "Hello, user";
+      });
+  </script>
+</body>
+</html>
